@@ -1,0 +1,45 @@
+{
+  "run_id": "tr_97899a0b",
+  "agent_name": "refund_agent",
+  "scenario_name": "baseline",
+  "steps": [
+    {
+      "step_number": 1,
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "call_2568eeb6",
+          "name": "lookup_order",
+          "arguments": {
+            "order_id": "ORD-1"
+          }
+        }
+      ],
+      "tool_results": [],
+      "output": null,
+      "cost_usd": 0.001,
+      "latency_ms": 0.015058999991879318
+    },
+    {
+      "step_number": 2,
+      "thought": null,
+      "tool_calls": [
+        {
+          "id": "call_72ccfda1",
+          "name": "issue_refund",
+          "arguments": {
+            "order_id": "ORD-1"
+          }
+        }
+      ],
+      "tool_results": [],
+      "output": null,
+      "cost_usd": 0.001,
+      "latency_ms": 0.012255999990884447
+    }
+  ],
+  "final_output": null,
+  "total_cost_usd": 0.002,
+  "total_latency_ms": 0.027314999982763766,
+  "created_at": 1789641657.2004175
+}
