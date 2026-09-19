@@ -1,67 +1,70 @@
 # trajence
 
-> Trajectory testing, invariant assertions, and deterministic replay for AI agents in CI/CD.
+> Deterministic trajectory testing for AI agents.
 >
-> `trajence` was chosen after checking that the more obvious names in this
-> space (`agenttrace`, `agentproof`, `agentledger`, `loopward`, `traceweave`,
-> `runseal`, and variants) are already in active use by other, unrelated
-> projects on PyPI and GitHub. `trajence` was verified clear at the time of
-> writing — do one final check yourself before publishing publicly, since
-> availability can change.
+> Capture what an agent does, verify that it follows your rules, and replay its
+> behavior in CI/CD.
 
-## What this actually is
+`trajence` is a lightweight, dependency-free Python toolkit for testing agent
+behavior—not just final outputs. It turns an agent run into a structured,
+inspectable trajectory and gives you the tools to validate, compare, and debug
+that run.
 
-`trajence` is a lightweight Python toolkit for testing AI agents by tracking
-what they do, not just what they say or output.
+## Why trajence?
 
-It helps developers:
+Traditional tests usually check an agent's final response. That can miss the
+important parts of an execution: which tools were called, in what order, how
+many steps were taken, and how much the run cost.
 
-- capture an agent run as a structured trajectory, including steps, tool calls,
-  latency, and cost
-- assert invariants such as required tool use, forbidden actions, ordering,
-  loop detection, and budget constraints
-- save a run as a cassette, then replay or diff it deterministically to catch
-  regressions without re-running expensive operations
-- integrate directly into CI/CD with a CLI that exits `0` on pass and `1` on
-  real safety or workflow violations
-- generate console and HTML reports for debugging and review
+`trajence` makes those behaviors testable and repeatable.
 
-## What this is *not* (yet)
+## Core capabilities
 
-- No chaos/fault-injection engine (HTTP 429/500 simulation) — planned, not built.
-- No GitHub Actions marketplace listing / `action.yml` — not built.
-- No hosted dashboard, no PR-comment bot, no billing tiers — none of that exists.
-  Anything you've seen about ARR targets or pricing tiers was speculative
-  narrative from an earlier planning session, not a real product decision.
+- **Trace agent runs** — capture steps, tool calls, latency, and cost in a
+  structured trajectory.
+- **Assert safety and correctness** — require or forbid tools, enforce tool
+  ordering, detect loops, limit steps, and check budgets.
+- **Replay and diff** — save a trajectory as a JSON cassette and compare future
+  runs without repeating expensive work.
+- **Run in CI/CD** — use the CLI's standard exit codes (`0` for success, `1`
+  for failure) to gate changes automatically.
+- **Generate reports** — inspect results in the console or an HTML report.
 
-## Install (local dev)
+## Quickstart
+
+### Install locally
 
 ```bash
 pip install -e .
 ```
 
-## Quickstart
+### Run a suite
 
 ```bash
 trajence init
 trajence run example_suite.py --html report.html --json report.json
 ```
 
-Or run the more realistic bundled example:
+Run the bundled example and tests:
 
 ```bash
-python3 -m unittest discover tests   # 19 unit tests, all verified passing
+python3 -m unittest discover tests
 trajence run examples/refund_agent.py --html report.html
 ```
 
-## Writing a suite
+## Write a suite
 
-A suite module needs one function, `build_suite()`, returning a
+A suite module exposes `build_suite()` and returns a
 `trajence.runner.suite.TestSuite`:
 
 ```python
-from trajence import AgentTracer, ToolCalledAssertion, ToolNeverCalledAssertion
+from trajence import (
+    AgentTracer,
+    ToolCalledAssertion,
+    ToolNeverCalledAssertion,
+)
 from trajence.runner.suite import TestSuite
+
 
 def run_my_agent():
     with AgentTracer("my_agent") as tracer:
@@ -70,31 +73,56 @@ def run_my_agent():
         tracer.end_step(cost_usd=0.001)
     return tracer.trajectory
 
+
 def build_suite() -> TestSuite:
     suite = TestSuite("my_suite")
     suite.add_scenario(
         "basic_search",
         run_my_agent,
-        [ToolCalledAssertion("search"), ToolNeverCalledAssertion("execute_sql")],
+        [
+            ToolCalledAssertion("search"),
+            ToolNeverCalledAssertion("execute_sql"),
+        ],
     )
     return suite
 ```
 
-## Replay / diff
+## Save and compare trajectories
+
+Save a known-good run as a cassette:
 
 ```python
 from trajence import save_cassette
+
 save_cassette(tracer.trajectory, "cassettes/baseline.json")
 ```
+
+Compare it with a later run:
 
 ```bash
 trajence diff cassettes/baseline.json cassettes/current.json
 ```
 
-## Status
+## Available assertions
 
-Everything documented above was written and actually executed in a real
-Python environment before being handed to you — 19/19 unit tests pass,
-the CLI correctly exits 0 on a passing suite and 1 on a genuine safety
-violation, and cassette save/load/diff round-trips correctly. Nothing here
-is aspirational or narrated-but-unverified.
+The toolkit currently includes assertions for:
+
+- required tool calls
+- forbidden tool calls
+- tool-call ordering
+- maximum step counts
+- budget limits
+- loop detection
+
+## Current scope
+
+`trajence` currently provides the Python library, CLI, cassette replay and
+comparison, and console/HTML reporting. Hosted dashboards, pull-request bots,
+a GitHub Actions marketplace action, and fault-injection features are outside
+its current scope.
+
+## Project status
+
+The documented workflow has been exercised locally: the test suite reports
+19/19 passing tests, the CLI returns the expected pass/fail exit codes, and
+cassette save/load/diff round-trips successfully.
