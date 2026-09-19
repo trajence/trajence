@@ -11,19 +11,20 @@
 
 ## What this actually is
 
-A small, dependency-light Python library + CLI for testing AI agents on
-*what they do*, not just what they output:
+`trajence` is a lightweight Python toolkit for testing AI agents by tracking
+what they do, not just what they say or output.
 
-- **`AgentTracer`** — instrument an agent run and capture the trajectory
-  (steps, tool calls, costs, latency) as a structured object.
-- **Assertions** — `ToolCalledAssertion`, `ToolNeverCalledAssertion` (safety
-  rails), `ToolOrderAssertion`, `MaxStepsAssertion` (loop detection),
-  `BudgetAssertion`, `NoLoopAssertion`.
-- **Cassette replay** — save a trajectory to JSON once, diff future runs
-  against it without re-running anything expensive.
-- **CLI** — `trajence run`, `trajence diff`, `trajence init`, with proper
-  Unix exit codes (`0` pass, `1` fail) so it can gate a CI pipeline.
-- **Console + HTML reporting.**
+It helps developers:
+
+- capture an agent run as a structured trajectory, including steps, tool calls,
+  latency, and cost
+- assert invariants such as required tool use, forbidden actions, ordering,
+  loop detection, and budget constraints
+- save a run as a cassette, then replay or diff it deterministically to catch
+  regressions without re-running expensive operations
+- integrate directly into CI/CD with a CLI that exits `0` on pass and `1` on
+  real safety or workflow violations
+- generate console and HTML reports for debugging and review
 
 ## What this is *not* (yet)
 
