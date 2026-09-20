@@ -117,9 +117,14 @@ Trajence is designed to run as a normal automated test command. A passing suite 
 
 Store reports and cassette diffs as CI artifacts when investigating a behavior regression.
 
-## Project documentation
+## Documentation
 
-- [Project brief](PROJECT_BRIEF.md) — product vision, scope, users, use cases, and current status.
+- [Project brief](PROJECT_BRIEF.md)
+- [Roadmap](ROADMAP.md)
+- [Architecture](ARCHITECTURE.md)
+- [Contributing guide](CONTRIBUTING.md)
+- [Usage guide](docs/USAGE.md)
+- [Changelog](CHANGELOG.md)
 
 ## Current scope
 
