@@ -2,32 +2,22 @@
 
 > Deterministic trajectory testing for AI agents.
 >
-> Capture what an agent does, verify that it follows your rules, and replay its
-> behavior in CI/CD.
+> Capture what an agent does, verify that it follows your rules, and replay its behavior in CI/CD.
 
-`trajence` is a lightweight, dependency-free Python toolkit for testing agent
-behavior—not just final outputs. It turns an agent run into a structured,
-inspectable trajectory and gives you the tools to validate, compare, and debug
-that run.
+`trajence` is a lightweight, dependency-free Python toolkit for testing agent behavior—not just final outputs. It turns an agent run into a structured, inspectable trajectory and gives you tools to validate, compare, and debug that run.
 
 ## Why trajence?
 
-Traditional tests usually check an agent's final response. That can miss the
-important parts of an execution: which tools were called, in what order, how
-many steps were taken, and how much the run cost.
+Traditional tests usually check an agent's final response. That can miss important parts of an execution: which tools were called, in what order, how many steps were taken, and how much the run cost.
 
-`trajence` makes those behaviors testable and repeatable.
+Trajence makes those behaviors testable and repeatable.
 
 ## Core capabilities
 
-- **Trace agent runs** — capture steps, tool calls, latency, and cost in a
-  structured trajectory.
-- **Assert safety and correctness** — require or forbid tools, enforce tool
-  ordering, detect loops, limit steps, and check budgets.
-- **Replay and diff** — save a trajectory as a JSON cassette and compare future
-  runs without repeating expensive work.
-- **Run in CI/CD** — use the CLI's standard exit codes (`0` for success, `1`
-  for failure) to gate changes automatically.
+- **Trace agent runs** — capture steps, tool calls, latency, and cost in a structured trajectory.
+- **Assert safety and correctness** — require or forbid tools, enforce tool ordering, detect loops, limit steps, and check budgets.
+- **Replay and diff** — save a trajectory as a JSON cassette and compare future runs without repeating expensive work.
+- **Run in CI/CD** — use the CLI's standard exit codes (`0` for success, `1` for failure) to gate changes automatically.
 - **Generate reports** — inspect results in the console or an HTML report.
 
 ## Quickstart
@@ -54,8 +44,7 @@ trajence run examples/refund_agent.py --html report.html
 
 ## Write a suite
 
-A suite module exposes `build_suite()` and returns a
-`trajence.runner.suite.TestSuite`:
+A suite module exposes `build_suite()` and returns a `trajence.runner.suite.TestSuite`:
 
 ```python
 from trajence import (
@@ -114,15 +103,38 @@ The toolkit currently includes assertions for:
 - budget limits
 - loop detection
 
+## CI/CD usage
+
+Trajence is designed to run as a normal automated test command. A passing suite exits with `0`; a failed suite exits with `1`, so it can be used directly in a pipeline:
+
+```yaml
+- name: Test agent trajectories
+  run: |
+    pip install -e .
+    python3 -m unittest discover tests
+    trajence run examples/refund_agent.py --html report.html
+```
+
+Store reports and cassette diffs as CI artifacts when investigating a behavior regression.
+
+## Project documentation
+
+- [Project brief](PROJECT_BRIEF.md) — product vision, scope, users, use cases, and current status.
+
 ## Current scope
 
-`trajence` currently provides the Python library, CLI, cassette replay and
-comparison, and console/HTML reporting. Hosted dashboards, pull-request bots,
-a GitHub Actions marketplace action, and fault-injection features are outside
-its current scope.
+`trajence` currently provides the Python library, CLI, cassette replay and comparison, and console/HTML reporting. Hosted dashboards, pull-request bots, a GitHub Actions marketplace action, and fault-injection features are outside its current scope.
 
 ## Project status
 
-The documented workflow has been exercised locally: the test suite reports
-19/19 passing tests, the CLI returns the expected pass/fail exit codes, and
-cassette save/load/diff round-trips successfully.
+The documented workflow has been exercised locally: the test suite reports 19/19 passing tests, the CLI returns the expected pass/fail exit codes, and cassette save/load/diff round-trips successfully.
+
+Trajence is an early-stage project with a working core. The next priorities are broader real-world examples, richer diagnostics, stronger contributor documentation, and validation against more complex agent workflows.
+
+## Core message
+
+> We test how an AI agent behaves, not just what it says.
+
+## License
+
+See the repository license for current licensing terms.
