@@ -122,11 +122,20 @@ class BudgetAssertion:
 
 
 class NoLoopAssertion:
-    """Fails if the same tool call (name + args) repeats more than `max_repeats` times
-    consecutively -- a cheap heuristic for detecting an agent stuck in a loop."""
+    """Fails if the agent gets stuck repeating a cycle of tool calls.
 
-    def __init__(self, max_repeats: int = 3):
+    Catches both the simple case (the same call fires N times in a row)
+    and the more common runaway pattern where an agent bounces between a
+    handful of tools in a fixed cycle -- e.g. A, B, A, B, A, B. Detection
+    scans for a repeating block of any length up to `max_period` and
+    flags it once that block repeats more than `max_repeats` times
+    back-to-back. `max_period` is capped by default to keep this cheap on
+    long trajectories; raise it if you expect longer cycles.
+    """
+
+    def __init__(self, max_repeats: int = 3, max_period: int = 8):
         self.max_repeats = max_repeats
+        self.max_period = max_period
 
     def evaluate(self, trajectory: Trajectory) -> AssertionResult:
         signatures: List[str] = []
@@ -134,22 +143,40 @@ class NoLoopAssertion:
             for tc in step.tool_calls:
                 signatures.append(f"{tc.name}:{sorted(tc.arguments.items())}")
 
-        run_len = 1
-        max_run = 1
-        for i in range(1, len(signatures)):
-            if signatures[i] == signatures[i - 1]:
-                run_len += 1
-                max_run = max(max_run, run_len)
-            else:
-                run_len = 1
+        n = len(signatures)
+        worst_repeats = 1
+        worst_period = 1
+        worst_start = 0
 
-        passed = max_run <= self.max_repeats
+        max_period = min(self.max_period, n // 2) if n >= 2 else 0
+        for period in range(1, max_period + 1):
+            i = 0
+            while i + period <= n:
+                repeats = 1
+                j = i
+                while (
+                    j + 2 * period <= n
+                    and signatures[j : j + period] == signatures[j + period : j + 2 * period]
+                ):
+                    repeats += 1
+                    j += period
+                if repeats > worst_repeats:
+                    worst_repeats = repeats
+                    worst_period = period
+                    worst_start = i
+                i += 1
+
+        passed = worst_repeats <= self.max_repeats
+        cycle = signatures[worst_start : worst_start + worst_period]
         return AssertionResult(
             assertion="NoLoop",
             passed=passed,
             message=(
-                f"No repeated-call loop detected (max run: {max_run})"
+                f"No repeating cycle detected (longest run: {worst_repeats}x)"
                 if passed
-                else f"Loop detected: same tool call repeated {max_run} times consecutively"
+                else (
+                    f"Loop detected: cycle {cycle} repeated {worst_repeats} times "
+                    f"consecutively (period {worst_period})"
+                )
             ),
         )
