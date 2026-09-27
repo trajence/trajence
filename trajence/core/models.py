@@ -12,6 +12,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+CURRENT_SCHEMA_VERSION = 1
+
 
 class ToolCall(BaseModel):
     id: str = Field(default_factory=lambda: f"call_{uuid.uuid4().hex[:8]}")
@@ -46,6 +48,7 @@ class Trajectory(BaseModel):
     total_cost_usd: float = 0.0
     total_latency_ms: float = 0.0
     created_at: float = Field(default_factory=time.time)
+    schema_version: int = CURRENT_SCHEMA_VERSION
 
     def tool_call_names(self) -> List[str]:
         """Flat list of every tool name called, in call order."""
