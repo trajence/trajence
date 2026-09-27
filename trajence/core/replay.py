@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, List
 
-from trajence.core.models import Trajectory
+from trajence.core.models import CURRENT_SCHEMA_VERSION, Trajectory
 
 
 def save_cassette(trajectory: Trajectory, path: str | Path) -> None:
@@ -22,7 +22,31 @@ def save_cassette(trajectory: Trajectory, path: str | Path) -> None:
 def load_cassette(path: str | Path) -> Trajectory:
     path = Path(path)
     data = json.loads(path.read_text())
+
+    file_version = data.get("schema_version", 0)  # 0 = cassette predates this field
+    if file_version > CURRENT_SCHEMA_VERSION:
+        raise ValueError(
+            f"Cassette at {path} was saved with trajence schema v{file_version}, "
+            f"but this installed version only supports up to v{CURRENT_SCHEMA_VERSION}. "
+            "Upgrade trajence to load it."
+        )
+    if file_version < CURRENT_SCHEMA_VERSION:
+        data = _migrate_cassette(data, from_version=file_version)
+
     return Trajectory.model_validate(data)
+
+
+def _migrate_cassette(data: Dict[str, Any], from_version: int) -> Dict[str, Any]:
+    """Upgrade an older cassette's raw dict to the current schema version.
+
+    Add one `if from_version < N: ...transform...` block per future schema
+    bump. There's nothing to transform yet -- v1 is the first versioned
+    schema -- this just stamps the field so future changes have a place
+    to hook in without breaking old cassettes silently.
+    """
+    data = dict(data)
+    data["schema_version"] = CURRENT_SCHEMA_VERSION
+    return data
 
 
 def diff_trajectories(baseline: Trajectory, current: Trajectory) -> Dict[str, Any]:
